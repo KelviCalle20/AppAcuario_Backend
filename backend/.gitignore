@@ -1,0 +1,5 @@
+#Secret
+
+node_modules/
+dist/
+.env
