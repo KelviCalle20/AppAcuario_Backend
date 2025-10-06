@@ -4,6 +4,43 @@ import bcrypt from "bcrypt";
 
 const router = express.Router();
 
+router.get("/", async (_req, res) => {
+  try {
+    const result = await pool.query("SELECT id, nombre, email FROM users ORDER BY id ASC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error al obtener usuarios:", err);
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+});
+
+// Actualizar usuario
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { nombre, email } = req.body;
+
+  const result = await pool.query(
+    "UPDATE users SET nombre = $1, email = $2 WHERE id = $3 RETURNING *",
+    [nombre, email, id]
+  );
+
+  if (result.rowCount === 0)
+    return res.status(404).json({ error: "Usuario no encontrado" });
+
+  res.json({ message: "Usuario actualizado correctamente" });
+});
+
+// Eliminar usuario
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const result = await pool.query("DELETE FROM users WHERE id = $1", [id]);
+  if (result.rowCount === 0)
+    return res.status(404).json({ error: "Usuario no encontrado" });
+
+  res.json({ message: "Usuario eliminado correctamente" });
+});
+
 // Registro
 router.post("/register", async (req, res) => {
   const { nombre, email, password } = req.body;
@@ -15,7 +52,7 @@ router.post("/register", async (req, res) => {
     );
     res.status(201).json({ message: "Usuario registrado correctamente" });
   } catch (err: unknown) {
-    console.error("❌ Error en registro:", err);
+    console.error("Error en registro:", err);
 
     if (err instanceof Error) {
       // Casteo a cualquier objeto para acceder a code (Postgres)
@@ -52,7 +89,7 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err: unknown) {
-    console.error("❌ Error en login:", err);
+    console.error("Error en login:", err);
 
     if (err instanceof Error) {
       res.status(500).json({ error: err.message });
