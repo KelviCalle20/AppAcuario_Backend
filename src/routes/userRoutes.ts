@@ -1,12 +1,12 @@
 import express from "express";
-import  pool  from "../config/db";
+import pool from "../config/db";
 import bcrypt from "bcrypt";
 
 const router = express.Router();
 
 router.get("/", async (_req, res) => {
   try {
-    const result = await pool.query("SELECT id, nombre, email FROM users ORDER BY id ASC");
+    const result = await pool.query("SELECT id, name, ap, am, email FROM users ORDER BY id ASC");
     res.json(result.rows);
   } catch (err) {
     console.error("Error al obtener usuarios:", err);
@@ -17,11 +17,11 @@ router.get("/", async (_req, res) => {
 // Actualizar usuario
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nombre, email } = req.body;
+  const { name, email } = req.body;
 
   const result = await pool.query(
-    "UPDATE users SET nombre = $1, email = $2 WHERE id = $3 RETURNING *",
-    [nombre, email, id]
+    "UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *",
+    [name, email, id]
   );
 
   if (result.rowCount === 0)
@@ -43,20 +43,19 @@ router.delete("/:id", async (req, res) => {
 
 // Registro
 router.post("/register", async (req, res) => {
-  const { nombre, email, password } = req.body;
+  const { name, ap, am, email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (nombre, email, password) VALUES ($1, $2, $3)",
-      [nombre, email, hashedPassword]
+      "INSERT INTO users (name, ap, am, email, password) VALUES ($1, $2, $3, $4, $5)",
+      [name, ap, am, email, hashedPassword]
     );
     res.status(201).json({ message: "Usuario registrado correctamente" });
   } catch (err: unknown) {
     console.error("Error en registro:", err);
 
     if (err instanceof Error) {
-      // Casteo a cualquier objeto para acceder a code (Postgres)
-      const pgError = err as any; 
+      const pgError = err as any;
       if (pgError.code === "23505") {
         res.status(400).json({ error: "El usuario ya existe" });
       } else {
@@ -84,7 +83,7 @@ router.post("/login", async (req, res) => {
       message: "Login exitoso",
       user: {
         id: user.id,
-        nombre: user.nombre,
+        name: user.name,
         email: user.email,
       },
     });
