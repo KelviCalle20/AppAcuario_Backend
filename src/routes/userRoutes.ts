@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", async (_req, res) => {
   try {
-    const result = await pool.query("SELECT id, name, ap, am, email FROM users ORDER BY id ASC");
+    const result = await pool.query("SELECT id, name, ap, am, email, state FROM users ORDER BY id ASC");
     res.json(result.rows);
   } catch (err) {
     console.error("Error al obtener usuarios:", err);
@@ -23,6 +23,8 @@ router.put("/:id", async (req, res) => {
     "UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *",
     [name, email, id]
   );
+
+
 
   if (result.rowCount === 0)
     return res.status(404).json({ error: "Usuario no encontrado" });
@@ -95,6 +97,30 @@ router.post("/login", async (req, res) => {
     } else {
       res.status(500).json({ error: "Error desconocido" });
     }
+  }
+});
+
+// estado activo/inactivo
+router.patch("/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { state } = req.body; // true = activo, false = inactivo
+
+  try {
+    const result = await pool.query(
+      "UPDATE users SET state = $1 WHERE id = $2 RETURNING *",
+      [state, id]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+
+    res.json({
+      message: `Usuario ${state ? "activado" : "desactivado"} correctamente`,
+      user: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error al cambiar estado:", err);
+    res.status(500).json({ error: "Error al cambiar estado" });
   }
 });
 
