@@ -3,7 +3,7 @@ import pool from "../config/db";
 import bcrypt from "bcrypt";
 
 const router = express.Router();
-const INITIAL_ADMIN_ID = 1;
+const INITIAL_ADMIN_ID = 1;// yo soy admin main
 
 // Obtener todos los usuarios
 router.get("/", async (_req, res) => {

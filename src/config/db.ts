@@ -1,19 +1,27 @@
-import pkg from 'pg';
-import dotenv from 'dotenv';
+import "reflect-metadata";
+import { DataSource } from "typeorm";
+import dotenv from "dotenv";
+import { Usuario } from "../aplication/usuarios/entities/user.entity";
+// importa otras entidades según sea necesario
+
 dotenv.config();
 
-const { Pool } = pkg;
-
-const pool = new Pool({
-  user: process.env.DB_USER,
+export const AppDataSource = new DataSource({
+  type: "postgres",
   host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
   port: Number(process.env.DB_PORT),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  entities: [Usuario], // agrega todas tus entidades aquí
+  synchronize: false, // si ya tienes tablas creadas, NO pongas true
+  logging: false,
 });
-
-pool.connect()
-  .then(() => console.log("Conectado a PostgreSQL"))
-  .catch(err => console.error("Error en conexión a PostgreSQL:", err));
-
-export default pool;
+// Inicialización
+AppDataSource.initialize()
+  .then(() => {
+    console.log("Conectado a PostgreSQL con TypeORM");
+  })
+  .catch((err) => {
+    console.error("Error al conectar con TypeORM:", err);
+  });
